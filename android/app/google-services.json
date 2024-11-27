@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "375629865641",
+    "project_id": "yamet-52705",
+    "storage_bucket": "yamet-52705.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:375629865641:android:b1003e230f4d21c1eb7fb8",
+        "android_client_info": {
+          "package_name": "com.example.yamet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUBjQfTq-mUyKRX_KojEjiaVvIG2TT3Tc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:375629865641:android:cceb4f0317fc5a75eb7fb8",
+        "android_client_info": {
+          "package_name": "com.yamet.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUBjQfTq-mUyKRX_KojEjiaVvIG2TT3Tc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
