@@ -1,37 +1,96 @@
-// lib/features/auth/services/auth_service.dart
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../config/routes/app_routes.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // Login with email and password
+  // Google Sign In untuk patient
+  Future<Map<String, dynamic>> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) throw 'Google Sign In dibatalkan';
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
+      if (user == null) throw 'Login gagal';
+
+      // Cek apakah email sudah terdaftar di collection admin atau terapis
+      final adminDoc =
+          await _firestore.collection('admins').doc(user.uid).get();
+      final terapisDoc =
+          await _firestore.collection('terapis').doc(user.uid).get();
+
+      if (adminDoc.exists || terapisDoc.exists) {
+        await _auth.signOut();
+        await _googleSignIn.signOut();
+        throw 'Email ini terdaftar sebagai admin/terapis. Gunakan email lain untuk akun patient.';
+      }
+
+      // Cek atau buat dokumen patient
+      final patientDoc =
+          await _firestore.collection('users').doc(user.uid).get();
+
+      if (!patientDoc.exists) {
+        // Buat dokumen patient baru
+        final userData = {
+          'name': user.displayName ?? 'Patient',
+          'email': user.email,
+          'role': 'patient',
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastLogin': FieldValue.serverTimestamp(),
+          'lastLoginDevice': 'mobile',
+          'isActive': true,
+          'uid': user.uid,
+          'photoURL': user.photoURL,
+          'loginMethod': 'google'
+        };
+
+        await _firestore.collection('users').doc(user.uid).set(userData);
+        return {'user': user, 'role': 'patient', 'userData': userData};
+      }
+
+      // Update last login untuk patient yang sudah ada
+      await patientDoc.reference.update({
+        'lastLogin': FieldValue.serverTimestamp(),
+        'lastLoginDevice': 'mobile',
+      });
+
+      return {'user': user, 'role': 'patient', 'userData': patientDoc.data()};
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  // Login with email and password (untuk semua role)
   Future<Map<String, dynamic>> signIn(String email, String password) async {
     try {
-      // Login dengan Firebase Auth
       final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
       final user = credential.user;
-      if (user == null) {
-        throw 'Login gagal';
-      }
+      if (user == null) throw 'Login gagal';
 
       // Cek di collection admins
       final adminDoc =
           await _firestore.collection('admins').doc(user.uid).get();
       if (adminDoc.exists) {
-        // Update last login untuk admin
         await adminDoc.reference.update({
           'lastLogin': FieldValue.serverTimestamp(),
           'lastLoginDevice': 'mobile',
         });
-
         return {'user': user, 'role': 'admin', 'userData': adminDoc.data()};
       }
 
@@ -39,28 +98,23 @@ class AuthService {
       final terapisDoc =
           await _firestore.collection('terapis').doc(user.uid).get();
       if (terapisDoc.exists) {
-        // Update last login untuk terapis
         await terapisDoc.reference.update({
           'lastLogin': FieldValue.serverTimestamp(),
           'lastLoginDevice': 'mobile',
         });
-
         return {'user': user, 'role': 'terapis', 'userData': terapisDoc.data()};
       }
 
-      // Cek di collection users
+      // Cek di collection users (patients)
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       if (userDoc.exists) {
-        // Update last login untuk user
         await userDoc.reference.update({
           'lastLogin': FieldValue.serverTimestamp(),
           'lastLoginDevice': 'mobile',
         });
-
-        return {'user': user, 'role': 'user', 'userData': userDoc.data()};
+        return {'user': user, 'role': 'patient', 'userData': userDoc.data()};
       }
 
-      // Jika tidak ditemukan di semua collection, logout dan throw error
       await _auth.signOut();
       throw 'Akun tidak ditemukan';
     } on FirebaseAuthException catch (e) {
@@ -87,11 +141,11 @@ class AuthService {
     }
   }
 
-  // Register new user
+  // Register patient with email
   Future<Map<String, dynamic>> register(
       String name, String email, String password) async {
     try {
-      // Cek apakah email sudah terdaftar di salah satu collection
+      // Cek email di semua collection
       final emailExistsInAdmins = await _checkEmailExists('admins', email);
       final emailExistsInTerapis = await _checkEmailExists('terapis', email);
       final emailExistsInUsers = await _checkEmailExists('users', email);
@@ -100,7 +154,6 @@ class AuthService {
         throw 'Email sudah terdaftar';
       }
 
-      // Create user in Firebase Auth
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -109,25 +162,21 @@ class AuthService {
       final user = credential.user;
       if (user == null) throw 'Registrasi gagal';
 
-      // Create user document in users collection
       final userData = {
-        'nama': name,
+        'name': name,
         'email': email,
-        'role': 'user',
+        'role': 'patient',
         'createdAt': FieldValue.serverTimestamp(),
         'lastLogin': FieldValue.serverTimestamp(),
         'lastLoginDevice': 'mobile',
         'isActive': true,
         'uid': user.uid,
+        'loginMethod': 'email'
       };
 
       await _firestore.collection('users').doc(user.uid).set(userData);
 
-      return {
-        'user': user,
-        'role': 'user',
-        'userData': userData,
-      };
+      return {'user': user, 'role': 'patient', 'userData': userData};
     } on FirebaseAuthException catch (e) {
       String message;
       switch (e.code) {
@@ -152,6 +201,7 @@ class AuthService {
   // Sign out
   Future<void> signOut() async {
     try {
+      await _googleSignIn.signOut();
       await _auth.signOut();
     } catch (e) {
       throw 'Gagal logout: $e';
@@ -173,7 +223,7 @@ class AuthService {
       if (terapisDoc.exists) return 'terapis';
 
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
-      if (userDoc.exists) return 'user';
+      if (userDoc.exists) return 'patient';
 
       return null;
     } catch (e) {
@@ -188,7 +238,7 @@ class AuthService {
         return AppRoutes.adminDashboard;
       case 'terapis':
         return AppRoutes.terapisDashboard;
-      case 'user':
+      case 'patient':
         return AppRoutes.userDashboard;
       default:
         return AppRoutes.login;
@@ -212,7 +262,7 @@ class AuthService {
         case 'terapis':
           doc = await _firestore.collection('terapis').doc(user.uid).get();
           break;
-        case 'user':
+        case 'patient':
           doc = await _firestore.collection('users').doc(user.uid).get();
           break;
       }
@@ -263,8 +313,8 @@ class AuthService {
     return role == 'terapis';
   }
 
-  Future<bool> isUser() async {
+  Future<bool> isPatient() async {
     final role = await getCurrentUserRole();
-    return role == 'user';
+    return role == 'patient';
   }
 }

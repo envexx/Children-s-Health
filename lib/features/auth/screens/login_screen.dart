@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../../../config/routes/app_routes.dart';
 
@@ -19,6 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  // Handle login with email/password
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -45,10 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
         );
       } finally {
         if (mounted) setState(() => _isLoading = false);
@@ -56,45 +52,30 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // Handle Google Sign In
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
-      if (googleUser == null) return;
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithCredential(credential);
+      final result = await _authService.signInWithGoogle();
 
       if (!mounted) return;
 
-      // Handle successful sign in
-      final user = userCredential.user;
-      if (user != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Welcome, ${user.displayName ?? 'User'}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Navigate to home screen
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Sign in failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          content: Text(
+              'Selamat datang, ${result['userData']?['nama'] ?? 'Patient'}'),
+          backgroundColor: Colors.green,
         ),
+      );
+
+      Navigator.pushReplacementNamed(
+        context,
+        _authService.getInitialRoute('patient'),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -114,7 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Modern Logo Container
+                  // Logo Container
                   Container(
                     height: 120,
                     width: 120,
@@ -132,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Welcome Text with Gradient
+                  // Welcome Text
                   ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
                       colors: [Color(0xFF4461F2), Color(0xFF6E8AFF)],
@@ -150,59 +131,30 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 8),
                   const Text(
                     'Silakan masuk untuk melanjutkan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF6B7280),
-                    ),
+                    style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 40),
 
-                  // Email Field with Animation
-                  TweenAnimationBuilder(
-                    duration: const Duration(milliseconds: 300),
-                    tween: Tween<double>(begin: 0, end: 1),
-                    builder: (context, double value, child) {
-                      return Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, 30 * (1 - value)),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: _buildInputDecoration(
-                        'Email',
-                        'Masukkan email Anda',
-                        Icons.email_outlined,
-                      ),
-                      validator: _emailValidator,
+                  // Email Field
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: _buildInputDecoration(
+                      'Email',
+                      'Masukkan email Anda',
+                      Icons.email_outlined,
                     ),
+                    validator: _emailValidator,
                   ),
                   const SizedBox(height: 16),
 
-                  // Password Field with Animation
-                  TweenAnimationBuilder(
-                    duration: const Duration(milliseconds: 300),
-                    tween: Tween<double>(begin: 0, end: 1),
-                    builder: (context, double value, child) {
-                      return Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, 30 * (1 - value)),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: _buildPasswordDecoration(),
-                      validator: _passwordValidator,
-                    ),
+                  // Password Field
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: _buildPasswordDecoration(),
+                    validator: _passwordValidator,
                   ),
 
                   // Forgot Password
@@ -216,24 +168,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Login Button with Gradient
+                  // Login Button
                   ElevatedButton(
                     onPressed: _isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                          borderRadius: BorderRadius.circular(12)),
+                      backgroundColor: const Color(0xFF4461F2),
                       elevation: 0,
-                    ).copyWith(
-                      backgroundColor: MaterialStateProperty.resolveWith<Color>(
-                        (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.disabled)) {
-                            return const Color(0xFF4461F2).withOpacity(0.6);
-                          }
-                          return const Color(0xFF4461F2);
-                        },
-                      ),
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -263,10 +206,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       Expanded(child: Divider()),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'Atau',
-                          style: TextStyle(color: Color(0xFF6B7280)),
-                        ),
+                        child: Text('Atau',
+                            style: TextStyle(color: Color(0xFF6B7280))),
                       ),
                       Expanded(child: Divider()),
                     ],
@@ -284,10 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: Image.asset(
-                      'assets/google_logo.png',
-                      height: 24,
-                    ),
+                    icon: Image.asset('assets/google_logo.png', height: 24),
                     label: const Text(
                       'Masuk dengan Google',
                       style: TextStyle(
@@ -309,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       TextButton(
                         onPressed: () =>
-                            Navigator.pushNamed(context, '/register'),
+                            Navigator.pushNamed(context, AppRoutes.register),
                         child: const Text(
                           'Daftar',
                           style: TextStyle(
@@ -329,6 +267,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Helper methods for input decoration
   InputDecoration _buildInputDecoration(
       String label, String hint, IconData icon) {
     return InputDecoration(
@@ -372,20 +311,15 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  // Validators
   String? _emailValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email harus diisi';
-    }
-    if (!value.contains('@')) {
-      return 'Email tidak valid';
-    }
+    if (value == null || value.isEmpty) return 'Email harus diisi';
+    if (!value.contains('@')) return 'Email tidak valid';
     return null;
   }
 
   String? _passwordValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password harus diisi';
-    }
+    if (value == null || value.isEmpty) return 'Password harus diisi';
     return null;
   }
 }

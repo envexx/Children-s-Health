@@ -12,7 +12,20 @@
           "package_name": "com.example.yamet"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "375629865641-2vfddkcnu0iph9necbba1v7rbend9vph.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.yamet",
+            "certificate_hash": "1aef0dcbbbda36b9950945b5bfbdea4e46c55bff"
+          }
+        },
+        {
+          "client_id": "375629865641-7stckulpbijp9bfp6tc7326034av0qu2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDUBjQfTq-mUyKRX_KojEjiaVvIG2TT3Tc"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "375629865641-7stckulpbijp9bfp6tc7326034av0qu2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "375629865641-b55so870ri14aqptrn6uvi8cvbe7omof.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.yamet"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +56,12 @@
           "package_name": "com.yamet.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "375629865641-7stckulpbijp9bfp6tc7326034av0qu2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDUBjQfTq-mUyKRX_KojEjiaVvIG2TT3Tc"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "375629865641-7stckulpbijp9bfp6tc7326034av0qu2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "375629865641-b55so870ri14aqptrn6uvi8cvbe7omof.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.yamet"
+              }
+            }
+          ]
         }
       }
     }

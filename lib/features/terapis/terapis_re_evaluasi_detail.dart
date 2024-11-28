@@ -343,247 +343,162 @@ class _TerapisReEvaluasiDetailState extends State<TerapisReEvaluasiDetail> {
   Future<void> _generateAndDownloadPDF() async {
     try {
       setState(() => _isGeneratingPdf = true);
-
       final hasPermission = await _requestStoragePermission();
-      if (!hasPermission) {
-        throw Exception('Izin penyimpanan diperlukan untuk menyimpan PDF');
-      }
+      if (!hasPermission) throw Exception('Izin penyimpanan diperlukan');
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white)),
-              SizedBox(width: 16),
-              Text('Menyiapkan PDF...'),
-            ],
-          ),
-          duration: Duration(seconds: 2),
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white)),
+            SizedBox(width: 16),
+            Text('Menyiapkan PDF...'),
+          ],
         ),
-      );
+        duration: Duration(seconds: 2),
+      ));
 
       final pdf = pw.Document();
+      final rows = _buildTableRows();
 
-      pdf.addPage(
-        pw.Page(
+      pdf.addPage(pw.Page(
           pageFormat: PdfPageFormat.a4,
           margin: const pw.EdgeInsets.all(20),
-          build: (pw.Context context) {
+          build: (context) {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                // Header
                 pw.Center(
-                  child: pw.Text(
-                    'Laporan Re Evaluasi',
-                    style: pw.TextStyle(
-                      fontSize: 16,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                ),
+                    child: pw.Text('Laporan Re Evaluasi',
+                        style: pw.TextStyle(
+                            fontSize: 16, fontWeight: pw.FontWeight.bold))),
                 pw.SizedBox(height: 20),
-
-                // Nama Anak
                 pw.Text(
-                  'Nama Anak: ${_childData?['name'] ?? widget.childName}',
-                  style: pw.TextStyle(fontSize: 12),
-                ),
+                    'Nama Anak: ${_childData?['name'] ?? widget.childName}'),
                 pw.SizedBox(height: 10),
-
-                // Program Terapi Header
-                pw.Text(
-                  'Program Terapi',
-                  style: pw.TextStyle(fontSize: 12),
-                ),
-                pw.SizedBox(height: 10),
-
-                // Table
                 pw.Table(
                   border: pw.TableBorder.all(),
                   columnWidths: {
-                    0: const pw.FlexColumnWidth(0.5), // No
-                    1: const pw.FlexColumnWidth(2.0), // Judul Program
-                    2: const pw.FlexColumnWidth(2.0), // Sub Program
-                    3: const pw.FlexColumnWidth(2.0), // Aktivitas
-                    4: const pw.FlexColumnWidth(1.5), // Tanggal Mulai
-                    5: const pw.FlexColumnWidth(1.5), // Tanggal Selesai
+                    0: const pw.FixedColumnWidth(50),
+                    1: const pw.FixedColumnWidth(150),
+                    2: const pw.FixedColumnWidth(150),
+                    3: const pw.FixedColumnWidth(200),
+                    4: const pw.FixedColumnWidth(120),
+                    5: const pw.FixedColumnWidth(120),
                   },
                   children: [
-                    // Table Header
+                    // Header
                     pw.TableRow(
-                      children: [
-                        'No',
-                        'Judul Program',
-                        'Sub Program',
-                        'Aktivitas',
-                        'Tanggal Mulai',
-                        'Tanggal Selesai',
-                      ]
-                          .map((text) => pw.Padding(
-                                padding: const pw.EdgeInsets.all(5),
-                                child: pw.Text(text,
-                                    style: pw.TextStyle(fontSize: 10)),
-                              ))
-                          .toList(),
-                    ),
-
-                    // Table Data
-                    ...(_rptData?.titles.expand((title) {
-                          int rowNumber = 1;
-                          return title.subtitles.expand((subtitle) {
-                            bool isFirstTitle = true;
-                            bool isFirstSubtitle = true;
-
-                            return subtitle.activities.map((activity) {
-                              final row = pw.TableRow(
-                                children: [
-                                  pw.Padding(
-                                    padding: const pw.EdgeInsets.all(5),
-                                    child: pw.Text(
-                                      isFirstTitle ? rowNumber.toString() : '',
-                                      style: const pw.TextStyle(fontSize: 10),
-                                    ),
-                                  ),
-                                  pw.Padding(
-                                    padding: const pw.EdgeInsets.all(5),
-                                    child: pw.Text(
-                                      isFirstTitle ? title.title : '',
-                                      style: const pw.TextStyle(fontSize: 10),
-                                    ),
-                                  ),
-                                  pw.Padding(
-                                    padding: const pw.EdgeInsets.all(5),
-                                    child: pw.Text(
-                                      isFirstSubtitle ? subtitle.subtitle : '',
-                                      style: const pw.TextStyle(fontSize: 10),
-                                    ),
-                                  ),
-                                  pw.Padding(
-                                    padding: const pw.EdgeInsets.all(5),
-                                    child: pw.Text(
-                                      activity.description,
-                                      style: const pw.TextStyle(fontSize: 10),
-                                    ),
-                                  ),
-                                  pw.Padding(
-                                    padding: const pw.EdgeInsets.all(5),
-                                    child: pw.Text(
-                                      DateFormat('dd/MM/yyyy')
-                                          .format(subtitle.createdAt),
-                                      style: const pw.TextStyle(fontSize: 10),
-                                    ),
-                                  ),
-                                  pw.Padding(
-                                    padding: const pw.EdgeInsets.all(5),
-                                    child: pw.Text(
-                                      subtitle.endDate != null
-                                          ? DateFormat('dd/MM/yyyy')
-                                              .format(subtitle.endDate!)
-                                          : '-',
-                                      style: const pw.TextStyle(fontSize: 10),
-                                    ),
-                                  ),
-                                ],
-                              );
-
-                              if (isFirstTitle) {
-                                isFirstTitle = false;
-                                rowNumber++;
+                        children: [
+                      'No',
+                      'Judul Program',
+                      'Sub Program',
+                      'Aktivitas',
+                      'Tanggal Mulai',
+                      'Tanggal Selesai'
+                    ]
+                            .map((text) => pw.Container(
+                                padding: const pw.EdgeInsets.all(8),
+                                child: pw.Text(text)))
+                            .toList()),
+                    // Data rows
+                    ...rows.map((row) => pw.TableRow(
+                          children: row.cells.map((cell) {
+                            String text = '';
+                            if (cell.child is Text) {
+                              text = (cell.child as Text).data ?? '';
+                            } else if (cell.child is Container) {
+                              final container = cell.child as Container;
+                              if (container.child is Text) {
+                                text = (container.child as Text).data ?? '';
                               }
-                              if (isFirstSubtitle) isFirstSubtitle = false;
-
-                              return row;
-                            });
-                          });
-                        }).toList() ??
-                        []),
+                            }
+                            return pw.Container(
+                                padding: const pw.EdgeInsets.all(8),
+                                child: pw.Text(text));
+                          }).toList(),
+                        ))
                   ],
                 ),
               ],
             );
-          },
-        ),
-      );
+          }));
 
+      // Simpan PDF
       final directory = await _getStorageDirectory();
-      if (directory == null) {
+      if (directory == null)
         throw Exception('Tidak dapat mengakses penyimpanan');
-      }
 
       final timestamp = DateFormat('ddMMyyyy_HHmmss').format(DateTime.now());
-      final fileName = 'laporan_evaluasi_${widget.childName}_$timestamp.pdf';
-      final file = File('${directory.path}/$fileName');
-
+      final file = File(
+          '${directory.path}/laporan_evaluasi_${widget.childName}_$timestamp.pdf');
       await file.writeAsBytes(await pdf.save());
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('PDF berhasil disimpan'),
-              const SizedBox(height: 4),
-              Text(
-                'Lokasi: ${file.path}',
-                style: const TextStyle(fontSize: 12),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 8),
-          action: SnackBarAction(
-            label: 'Buka',
-            textColor: Colors.white,
-            onPressed: () async {
-              try {
-                final result = await OpenFile.open(file.path);
-                if (result.type != ResultType.done && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Gagal membuka file: ${result.message}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              } catch (e) {
-                print('Error opening file: $e');
-                if (!mounted) return;
+      _showSuccessSnackbar(file.path);
+    } catch (e) {
+      print('Error generating PDF: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Gagal mengunduh PDF: $e'),
+            backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _isGeneratingPdf = false);
+    }
+  }
+
+  void _showSuccessSnackbar(String filePath) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('PDF berhasil disimpan'),
+            const SizedBox(height: 4),
+            Text(
+              'Lokasi: $filePath',
+              style: const TextStyle(fontSize: 12),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 8),
+        action: SnackBarAction(
+          label: 'Buka',
+          textColor: Colors.white,
+          onPressed: () async {
+            try {
+              final result = await OpenFile.open(filePath);
+              if (result.type != ResultType.done && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Gagal membuka file: $e'),
+                    content: Text('Gagal membuka file: ${result.message}'),
                     backgroundColor: Colors.red,
                   ),
                 );
               }
-            },
-          ),
+            } catch (e) {
+              print('Error opening file: $e');
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Gagal membuka file: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
         ),
-      );
-    } catch (e) {
-      print('Error generating PDF: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal mengunduh PDF: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isGeneratingPdf = false);
-      }
-    }
+      ),
+    );
   }
 
   DataRow _buildTitleRow(
@@ -1173,27 +1088,64 @@ class _TerapisReEvaluasiDetailState extends State<TerapisReEvaluasiDetail> {
     );
   }
 
-  DataTable _buildDataTable() {
-    return DataTable(
-      headingRowColor: MaterialStateColor.resolveWith(
-        (states) => colorPrimary.withOpacity(0.05),
+  Widget _buildDataTable() {
+    final screenWidth = MediaQuery.of(context).size.width - 32;
+
+    return SizedBox(
+      width: screenWidth > 1200 ? 1200 : screenWidth,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          cardColor: Colors.white,
+          dividerColor: colorPrimary.withOpacity(0.1),
+        ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowColor: MaterialStateColor.resolveWith(
+              (states) => colorPrimary.withOpacity(0.05),
+            ),
+            border: TableBorder.all(
+              color: colorPrimary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            columnSpacing: 24,
+            horizontalMargin: 16,
+            columns: [
+              DataColumn(
+                  label: SizedBox(
+                      width: 50,
+                      child: Text('No',
+                          style: TextStyle(fontWeight: FontWeight.bold)))),
+              DataColumn(
+                  label: SizedBox(
+                      width: 150,
+                      child: Text('Judul Program',
+                          style: TextStyle(fontWeight: FontWeight.bold)))),
+              DataColumn(
+                  label: SizedBox(
+                      width: 150,
+                      child: Text('Sub Program',
+                          style: TextStyle(fontWeight: FontWeight.bold)))),
+              DataColumn(
+                  label: SizedBox(
+                      width: 200,
+                      child: Text('Aktivitas',
+                          style: TextStyle(fontWeight: FontWeight.bold)))),
+              DataColumn(
+                  label: SizedBox(
+                      width: 120,
+                      child: Text('Tanggal Mulai',
+                          style: TextStyle(fontWeight: FontWeight.bold)))),
+              DataColumn(
+                  label: SizedBox(
+                      width: 120,
+                      child: Text('Tanggal Selesai',
+                          style: TextStyle(fontWeight: FontWeight.bold)))),
+            ],
+            rows: _buildTableRows(),
+          ),
+        ),
       ),
-      border: TableBorder.all(
-        color: colorPrimary.withOpacity(0.1),
-        width: 1,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      columnSpacing: 24,
-      horizontalMargin: 16,
-      columns: [
-        _buildColumn('No'),
-        _buildColumn('Judul Program'),
-        _buildColumn('Sub Program'),
-        _buildColumn('Aktivitas'),
-        _buildColumn('Tanggal Mulai'),
-        _buildColumn('Tanggal Selesai'),
-      ],
-      rows: _buildTableRows(),
     );
   }
 
