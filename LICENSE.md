@@ -3,8 +3,8 @@
 ## License Terms
 
 1. **Ownership and Copyright**
-   - All rights to this software are exclusively owned by [YOUR FULL NAME]
-   - Copyright © 2024 [YOUR FULL NAME]
+   - All rights to this software are exclusively owned by Core Solution
+   - Copyright © 2024 Core Solution
    - All intellectual property rights are reserved
 
 2. **Usage Restrictions**
@@ -19,7 +19,7 @@
 
 4. **Liability and Warranty**
    - Software is provided "AS IS" without any warranty
-   - [YOUR FULL NAME] is not liable for any damages arising from software use
+   - **Core Solution** is not liable for any damages arising from software use
 
 5. **Termination**
    - This license is immediately terminated if any of its terms are violated
