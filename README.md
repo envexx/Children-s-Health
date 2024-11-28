@@ -89,8 +89,7 @@ We welcome contributions! Please see `CONTRIBUTING.md` for details on our code o
 This project is licensed under the MIT License - see the `LICENSE.md` file for details.
 
 ## 📞 Contact
-- Project Maintainer: [Your Name]
-- Email: [your.email@example.com]
-- Project Link: [Repository URL]
+- Project Maintainer: Core.
+- Email: ompekp@gmail.com
 
 **Disclaimer**: This application is designed to assist in children's health management and should not replace professional medical advice.
